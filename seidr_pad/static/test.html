@@ -34,6 +34,7 @@
   .name:hover { background: var(--raised); }
   .name.unset { color: var(--dim); font-weight: 400; font-size: 13px; border: 1px dashed var(--edge); }
   .card.off .name { display: none; }
+  .wname { font-weight: 700; font-size: 16px; white-space: nowrap; max-width: 140px; overflow: hidden; text-overflow: ellipsis; }
   .sub { color: var(--dim); font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; }
   .pill { font-size: 12px; color: var(--dim); background: var(--raised); border-radius: 999px; padding: 2px 8px; white-space: nowrap; }
 
@@ -167,20 +168,19 @@ for (let i = 1; i <= 4; i++) {
   phoneCards.push(c);
 }
 let monitor = null;
-const nameByXinput = new Map(); // Windows controller index -> player label, for the "Seen by Windows" cards
+const players = new Map(); // slot -> latest player info from the server, including its live state
 
 const fromServer = (s) => ({ b: s[0], lt: s[1] / 255, rt: s[2] / 255,
   lx: s[3] / 32767, ly: s[4] / 32767, rx: s[5] / 32767, ry: s[6] / 32767 });
 
-function showPlayers(players) {
-  nameByXinput.clear();
-  for (const p of players) {
+function showPlayers(list) {
+  for (const p of list) {
+    players.set(p.slot, p);
     const c = phoneCards[p.slot - 1];
     c.name = p.name || "";
     const nameEl = c.card.querySelector(".name");
     nameEl.textContent = c.name || "add name";
     nameEl.classList.toggle("unset", !c.name);
-    if (p.connected && p.xinput != null) nameByXinput.set(p.xinput, `P${p.slot}` + (c.name ? ` ${c.name}` : ""));
     c.card.classList.toggle("off", !p.connected);
     const sub = c.card.querySelector(".sub");
     if (p.connected || p.held) {
@@ -223,6 +223,8 @@ function connect() {
       const c = phoneCards[m.slot - 1];
       c.update(fromServer(m.s));
       c.count++;
+      const p = players.get(m.slot);
+      if (p) p.state = m.s;
     } else if (m.t === "log") {
       addLog(m.msg);
     }
@@ -263,6 +265,53 @@ function fromGamepad(gp) {
            lx: ax(0), ly: -ax(1), rx: ax(2), ry: -ax(3) };
 }
 
+// Which player is behind each controller the browser sees? The browser numbers
+// controllers its own way, which can drift from Windows' numbering (e.g. after
+// controllers are unplugged and replugged). So learn it: when a controller shows
+// exactly the buttons one phone is pressing, that's that phone. Until then,
+// guess from Windows' controller number.
+const slotByPad = new Map(); // browser gamepad index -> player slot
+
+const inputKey = (b, lt, rt) => `${b & ~BITS.Guide}|${lt > 0.5 ? 1 : 0}|${rt > 0.5 ? 1 : 0}`;
+
+function learn(gp, s) {
+  if (!(s.b & ~BITS.Guide) && s.lt <= 0.5 && s.rt <= 0.5) return; // idle input matches everyone
+  const key = inputKey(s.b, s.lt, s.rt);
+  const matches = [...players.values()].filter((p) =>
+    p.connected && p.state && inputKey(p.state[0], p.state[1] / 255, p.state[2] / 255) === key);
+  if (matches.length !== 1) return;
+  const slot = matches[0].slot;
+  for (const [i, other] of slotByPad) if (other === slot && i !== gp.index) slotByPad.delete(i);
+  slotByPad.set(gp.index, slot);
+}
+
+function playerFor(gp) {
+  const learned = players.get(slotByPad.get(gp.index));
+  if (learned && learned.connected) return { p: learned, sure: true };
+  const guess = [...players.values()].find((p) => p.connected && p.xinput === gp.index);
+  return guess ? { p: guess, sure: false } : null;
+}
+
+function labelWindowsCard(c, gp) {
+  const match = playerFor(gp);
+  const key = match ? `${match.p.slot}|${match.p.name}|${match.sure}` : "none";
+  if (c.key === key) return;
+  c.key = key;
+  const tag = c.card.querySelector(".tag"), name = c.card.querySelector(".wname");
+  const sub = c.card.querySelector(".sub");
+  if (match) {
+    tag.textContent = `P${match.p.slot}`;
+    tag.style.color = COLORS[match.p.slot - 1];
+    name.textContent = match.p.name || "";
+    sub.textContent = (match.sure ? "" : "probably · press a button to confirm · ") + `browser #${gp.index + 1} · ${gp.id}`;
+  } else {
+    tag.textContent = `#${gp.index + 1}`;
+    tag.style.color = "";
+    name.textContent = "";
+    sub.textContent = `no phone matched yet · ${gp.id}`;
+  }
+}
+
 function pollGamepads() {
   const pads = navigator.getGamepads ? [...navigator.getGamepads()].filter(Boolean) : [];
   const seen = new Set();
@@ -272,16 +321,16 @@ function pollGamepads() {
     if (!c) {
       const card = document.createElement("div");
       card.className = "card";
-      card.innerHTML = `<div class="head"><span class="tag">#${gp.index + 1}</span><span class="pill who"></span>` +
+      card.innerHTML = `<div class="head"><span class="tag"></span><span class="wname"></span>` +
         `<span class="sub"></span></div><div class="body"></div>`;
-      card.querySelector(".sub").textContent = gp.id;
       winEl.appendChild(card);
       c = { card, update: controller(card.querySelector(".body")) };
       winCards.set(gp.index, c);
     }
-    c.update(fromGamepad(gp));
-    const who = nameByXinput.get(gp.index) || "";
-    if (c.who !== who) { c.who = who; c.card.querySelector(".who").textContent = who; }
+    const s = fromGamepad(gp);
+    c.update(s);
+    learn(gp, s);
+    labelWindowsCard(c, gp);
   }
   for (const [i, c] of winCards) {
     if (!seen.has(i)) { c.card.remove(); winCards.delete(i); }

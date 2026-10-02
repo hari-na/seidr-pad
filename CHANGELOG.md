@@ -4,6 +4,10 @@ All notable changes are listed here. The format follows [Keep a Changelog](https
 
 ## [Unreleased]
 
+### Fixed
+
+- Test page: the "Seen by Windows" cards now show each player's name as the title, and match controllers to players by watching which one moves when a phone presses something. Before, names could land on the wrong controller when the browser's controller numbering differed from Windows'.
+
 ### Removed
 
 - Phone vibration: buttons no longer buzz and game rumble no longer vibrates the phone, on any device.
