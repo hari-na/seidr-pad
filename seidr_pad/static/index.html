@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Seidr Pad">
+<meta name="theme-color" content="#0e0f12">
+<link rel="manifest" href="/static/manifest.json">
+<link rel="apple-touch-icon" href="/static/icon.png">
+<link rel="stylesheet" href="/static/pad.css">
+<title>Seidr Pad</title>
+</head>
+<body>
+<div id="pad">
+  <div class="btn shoulder" data-btn="LT" style="left:var(--l);top:var(--t)">LT</div>
+  <div class="btn shoulder" data-btn="LB" style="left:calc(var(--l) + 20vw);top:var(--t)">LB</div>
+  <div class="btn shoulder" data-btn="RB" style="right:calc(var(--r) + 20vw);top:var(--t)">RB</div>
+  <div class="btn shoulder" data-btn="RT" style="right:var(--r);top:var(--t)">RT</div>
+
+  <div class="stick-zone" id="lzone" data-stick="L"><div class="base"><div class="knob"></div></div></div>
+  <div class="stick-zone" id="rzone" data-stick="R"><div class="base"><div class="knob"></div></div></div>
+
+  <div id="dpad" data-dpad>
+    <div class="arm up"></div><div class="arm down"></div>
+    <div class="arm left"></div><div class="arm right"></div>
+  </div>
+
+  <div id="face">
+    <div class="btn face y" data-btn="Y">Y</div>
+    <div class="btn face x" data-btn="X">X</div>
+    <div class="btn face b" data-btn="B">B</div>
+    <div class="btn face a" data-btn="A">A</div>
+  </div>
+
+  <div id="menu">
+    <div class="btn small" data-btn="BACK">&#x29C9;</div>
+    <div class="btn small guide" data-btn="GUIDE">&#x2B58;</div>
+    <div class="btn small" data-btn="START">&#x2261;</div>
+  </div>
+
+  <div id="badge"><span id="player">-</span><span id="pname">tap to name</span><small id="net">connecting</small></div>
+</div>
+
+<div id="overlay">
+  <div class="card">
+    <h1 id="ov-title">Seidr Pad</h1>
+    <p id="ov-text">Tap to start</p>
+    <p id="ov-ios" hidden>For full screen on iPhone: tap Share, then <b>Add to Home Screen</b>, and open it from there.</p>
+  </div>
+</div>
+<div id="rotate"><div class="card"><p>Turn your phone sideways</p></div></div>
+
+<script src="/static/pad.js"></script>
+</body>
+</html>

@@ -1,0 +1,105 @@
+:root {
+  --bg: #0e0f12;
+  --panel: #1b1d23;
+  --edge: #2c2f38;
+  --text: #e8e9ec;
+  --dim: #8a8e99;
+  --accent: #4f8cff;
+  --l: max(2vw, env(safe-area-inset-left));
+  --r: max(2vw, env(safe-area-inset-right));
+  --t: 2vh;
+  --face: min(18vh, 10.5vw);
+}
+
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+html, body {
+  margin: 0; height: 100%; overflow: hidden;
+  background: var(--bg); color: var(--text);
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  touch-action: none; user-select: none; -webkit-user-select: none;
+  -webkit-touch-callout: none; overscroll-behavior: none;
+}
+
+#pad { position: fixed; inset: 0; }
+
+.btn {
+  position: absolute; display: grid; place-items: center;
+  background: var(--panel); border: 2px solid var(--edge);
+  font-weight: 700; color: var(--dim);
+}
+.btn.on { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+.shoulder { width: 18vw; height: 14vh; border-radius: 3vh; font-size: 4vh; }
+
+/* Sticks: the whole zone is touchable, the stick centers where the thumb lands. */
+.stick-zone { position: absolute; }
+#lzone { left: 0; top: 18vh; width: 38vw; height: 46vh; }
+#rzone { left: 50vw; top: 58vh; width: 30vw; height: 42vh; }
+.base {
+  position: absolute; width: 30vh; height: 30vh; margin: -15vh 0 0 -15vh;
+  border-radius: 50%; background: var(--panel); border: 2px solid var(--edge);
+  left: 50%; top: 50%; pointer-events: none;
+}
+.knob {
+  position: absolute; left: 50%; top: 50%; width: 13vh; height: 13vh; margin: -6.5vh 0 0 -6.5vh;
+  border-radius: 50%; background: #3a3e4a; border: 2px solid #4a4f5c;
+}
+.stick-zone.active .knob { background: var(--accent); border-color: var(--accent); }
+.stick-zone.click .base { border-color: #fff; }
+
+#dpad {
+  position: absolute; left: calc(var(--l) + 20vw); top: 79vh;
+  width: 34vh; height: 34vh; margin: -17vh 0 0 -17vh;
+}
+#dpad .arm { position: absolute; background: var(--panel); border: 2px solid var(--edge); border-radius: 1.5vh; }
+#dpad .up, #dpad .down { left: 33%; width: 34%; height: 38%; }
+#dpad .left, #dpad .right { top: 33%; height: 34%; width: 38%; }
+#dpad .up { top: 0; } #dpad .down { bottom: 0; }
+#dpad .left { left: 0; } #dpad .right { right: 0; }
+#dpad .arm.on { background: var(--accent); border-color: var(--accent); }
+
+#face {
+  position: absolute; right: calc(var(--r) + 2vw); top: 47vh;
+  width: calc(var(--face) * 3.2); height: calc(var(--face) * 3.2);
+  transform: translateY(-50%);
+}
+.face { width: var(--face); height: var(--face); border-radius: 50%; font-size: calc(var(--face) * 0.45); }
+.face.y { left: 50%; top: 0; margin-left: calc(var(--face) / -2); color: #f2c230; }
+.face.a { left: 50%; bottom: 0; margin-left: calc(var(--face) / -2); color: #5ac85a; }
+.face.x { left: 0; top: 50%; margin-top: calc(var(--face) / -2); color: #4f8cff; }
+.face.b { right: 0; top: 50%; margin-top: calc(var(--face) / -2); color: #e8574f; }
+.face.y.on { background: #f2c230; border-color: #f2c230; color: #000; }
+.face.a.on { background: #5ac85a; border-color: #5ac85a; color: #000; }
+.face.x.on { background: #4f8cff; border-color: #4f8cff; color: #fff; }
+.face.b.on { background: #e8574f; border-color: #e8574f; color: #fff; }
+
+#menu {
+  position: absolute; left: 50%; top: 22vh; transform: translateX(-50%);
+  display: flex; gap: 3vw; width: 0; justify-content: center;
+}
+#menu .btn { position: relative; width: 11vh; height: 11vh; border-radius: 50%; font-size: 5vh; flex: none; }
+#menu .guide { width: 13vh; height: 13vh; margin-top: -1vh; }
+
+#badge {
+  position: absolute; left: 50%; top: 40vh; transform: translateX(-50%);
+  display: flex; flex-direction: column; align-items: center; pointer-events: none;
+}
+#player { font-size: 11vh; font-weight: 800; color: var(--accent); line-height: 1; }
+#pname { pointer-events: auto; font-size: 4.5vh; font-weight: 600; margin-top: 1vh; padding: 0.5vh 2vh;
+         border-radius: 2vh; max-width: 24vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#pname.unset { color: var(--dim); font-weight: 400; border: 1px dashed var(--edge); }
+#net { color: var(--dim); font-size: 3vh; margin-top: 1vh; white-space: nowrap; }
+
+#overlay, #rotate {
+  position: fixed; inset: 0; display: grid; place-items: center;
+  background: rgba(14, 15, 18, 0.94); z-index: 10; padding: 16px;
+}
+#overlay[hidden], #rotate[hidden] { display: none; }
+.card { text-align: center; max-width: 520px; }
+.card h1 { margin: 0 0 8px; font-size: 28px; }
+.card p { color: var(--dim); font-size: 18px; margin: 8px 0; }
+#ov-text { color: var(--text); font-size: 22px; }
+
+#rotate { display: none; }
+@media (orientation: portrait) { #rotate { display: grid; } }
