@@ -1,0 +1,295 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="/static/seidr-pad.ico">
+<title>Seidr Pad Test</title>
+<style>
+  :root {
+    --bg: #0e0f12; --panel: #16181d; --raised: #1f2229; --edge: #2c2f38;
+    --text: #e8e9ec; --dim: #8a8e99; --on: #4f8cff;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text); font-family: system-ui, "Segoe UI", sans-serif; padding: 20px 16px 40px; }
+  header { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px 20px; margin-bottom: 18px; }
+  h1 { margin: 0; font-size: 24px; }
+  h2 { font-size: 15px; text-transform: uppercase; letter-spacing: .08em; color: var(--dim); margin: 26px 0 10px; font-weight: 600; }
+  h2 small { text-transform: none; letter-spacing: 0; font-weight: 400; margin-left: 8px; }
+  .meta { color: var(--dim); font-size: 14px; }
+  .mode { font-size: 13px; padding: 3px 10px; border-radius: 999px; background: var(--raised); border: 1px solid var(--edge); }
+  .mode.test { color: #f2c230; border-color: #6b5a1c; }
+  .mode.live { color: #5ac85a; border-color: #2a5a2a; }
+  #stop { margin-left: auto; font: inherit; font-size: 14px; font-weight: 600; color: var(--text); background: var(--raised);
+          border: 1px solid var(--edge); border-radius: 8px; padding: 7px 14px; cursor: pointer; }
+  #stop:hover { border-color: #e8574f; color: #e8574f; }
+  #stop[hidden] { display: none; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(330px, 1fr)); gap: 12px; }
+  .card { background: var(--panel); border: 1px solid var(--edge); border-radius: 14px; padding: 12px 14px 14px; }
+  .card.off { opacity: .45; }
+  .head { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; min-height: 24px; }
+  .tag { font-weight: 800; font-size: 18px; }
+  .name { font-weight: 700; font-size: 16px; cursor: pointer; border-radius: 6px; padding: 1px 6px; margin-left: -4px;
+          white-space: nowrap; max-width: 140px; overflow: hidden; text-overflow: ellipsis; }
+  .name:hover { background: var(--raised); }
+  .name.unset { color: var(--dim); font-weight: 400; font-size: 13px; border: 1px dashed var(--edge); }
+  .card.off .name { display: none; }
+  .sub { color: var(--dim); font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; }
+  .pill { font-size: 12px; color: var(--dim); background: var(--raised); border-radius: 999px; padding: 2px 8px; white-space: nowrap; }
+
+  /* mini controller */
+  .pad { position: relative; height: 176px; }
+  .pad .b { position: absolute; display: grid; place-items: center; font-size: 11px; font-weight: 700;
+            background: var(--raised); border: 1px solid var(--edge); color: var(--dim); transition: background .03s; }
+  .pad .b.on { background: var(--c, var(--on)); border-color: var(--c, var(--on)); color: #000; }
+  .sh { width: 46px; height: 20px; border-radius: 6px; top: 0; }
+  .trig { position: absolute; top: 0; width: 46px; height: 20px; border-radius: 6px; border: 1px solid var(--edge);
+          background: var(--raised); overflow: hidden; font-size: 11px; font-weight: 700; color: var(--dim); display: grid; place-items: center; }
+  .trig i { position: absolute; left: 0; bottom: 0; top: 0; background: var(--on); width: 0; }
+  .trig span { position: relative; }
+  .stick { position: absolute; width: 64px; height: 64px; border-radius: 50%; background: var(--raised); border: 1px solid var(--edge); }
+  .stick::before, .stick::after { content: ""; position: absolute; background: var(--edge); }
+  .stick::before { left: 50%; top: 6px; bottom: 6px; width: 1px; }
+  .stick::after { top: 50%; left: 6px; right: 6px; height: 1px; }
+  .stick .dot { position: absolute; left: 50%; top: 50%; width: 16px; height: 16px; margin: -8px; border-radius: 50%;
+                background: #5b6070; z-index: 1; }
+  .stick.moved .dot { background: var(--on); }
+  .stick.click { border-color: #fff; box-shadow: 0 0 0 2px #fff inset; }
+  .round { width: 26px; height: 26px; border-radius: 50%; }
+  .dp { width: 20px; height: 20px; border-radius: 4px; }
+  .mid { width: 30px; height: 18px; border-radius: 9px; font-size: 10px !important; }
+  .raw { font: 12px/1.5 ui-monospace, Consolas, monospace; color: var(--dim); margin-top: 8px; min-height: 36px; word-break: break-word; }
+  .raw b { color: var(--text); font-weight: 600; }
+
+  .empty { color: var(--dim); background: var(--panel); border: 1px dashed var(--edge); border-radius: 14px; padding: 18px; font-size: 14px; line-height: 1.5; }
+  #log { background: var(--panel); border: 1px solid var(--edge); border-radius: 14px; padding: 10px 14px; height: 220px; overflow: auto;
+         font: 12px/1.6 ui-monospace, Consolas, monospace; color: var(--dim); white-space: pre-wrap; }
+  #log div:last-child { color: var(--text); }
+</style>
+</head>
+<body>
+<header>
+  <h1>Seidr Pad test</h1>
+  <span class="mode" id="mode">connecting</span>
+  <span class="meta" id="url"></span>
+  <button id="stop" hidden>Stop server</button>
+</header>
+
+<h2>Sent by phones <small>what the server receives</small></h2>
+<div class="grid" id="phones"></div>
+
+<h2>Seen by Windows <small>read back from the virtual controllers through the browser</small></h2>
+<div id="winwrap">
+  <div class="empty" id="winempty">No controllers visible yet. Click on this page, then press any button on a phone.
+    Browsers only reveal controllers after a button press while the page is in front.</div>
+  <p class="meta" style="margin:0 0 10px">If a button held on a phone doesn't light up here, release it and press again.
+    Browsers hide input that was already held when they first saw the controller.</p>
+  <div class="grid" id="windows"></div>
+</div>
+
+<h2>Server log</h2>
+<div id="log"></div>
+
+<script>
+"use strict";
+const BITS = { Up: 1, Down: 2, Left: 4, Right: 8, Start: 0x10, Back: 0x20, LS: 0x40, RS: 0x80,
+               LB: 0x100, RB: 0x200, Guide: 0x400, A: 0x1000, B: 0x2000, X: 0x4000, Y: 0x8000 };
+const COLORS = ["#4f8cff", "#e8574f", "#5ac85a", "#f2c230"];
+const FACE = { A: "#5ac85a", B: "#e8574f", X: "#4f8cff", Y: "#f2c230" };
+
+// Builds a mini controller inside `el`; returns update({b, lt, rt, lx, ly, rx, ry}) with
+// triggers 0..1 and sticks -1..1 (y up is positive).
+function controller(el) {
+  const W = el.clientWidth || 300;
+  const parts = [];
+  const add = (html) => parts.push(html);
+  const L = 8, R = W - 8;
+  add(`<div class="trig" data-t="lt" style="left:${L}px"><i></i><span>LT</span></div>`);
+  add(`<div class="b sh" data-b="LB" style="left:${L + 52}px">LB</div>`);
+  add(`<div class="b sh" data-b="RB" style="left:${R - 98}px">RB</div>`);
+  add(`<div class="trig" data-t="rt" style="left:${R - 46}px"><i></i><span>RT</span></div>`);
+  add(`<div class="stick" data-s="l" style="left:${L + 14}px;top:34px"><div class="dot"></div></div>`);
+  const dx = L + 92, dy = 112;
+  add(`<div class="b dp" data-b="Up" style="left:${dx}px;top:${dy}px"></div>`);
+  add(`<div class="b dp" data-b="Down" style="left:${dx}px;top:${dy + 40}px"></div>`);
+  add(`<div class="b dp" data-b="Left" style="left:${dx - 20}px;top:${dy + 20}px"></div>`);
+  add(`<div class="b dp" data-b="Right" style="left:${dx + 20}px;top:${dy + 20}px"></div>`);
+  const cx = W / 2;
+  add(`<div class="b mid" data-b="Back" style="left:${cx - 54}px;top:50px">BK</div>`);
+  add(`<div class="b mid" data-b="Guide" style="left:${cx - 15}px;top:50px">G</div>`);
+  add(`<div class="b mid" data-b="Start" style="left:${cx + 24}px;top:50px">ST</div>`);
+  const fx = R - 60, fy = 34;
+  for (const [n, x, y] of [["Y", fx, fy], ["X", fx - 30, fy + 28], ["B", fx + 30, fy + 28], ["A", fx, fy + 56]]) {
+    add(`<div class="b round" data-b="${n}" style="left:${x}px;top:${y}px;--c:${FACE[n]};color:${FACE[n]}">${n}</div>`);
+  }
+  add(`<div class="stick" data-s="r" style="left:${R - 140}px;top:104px"><div class="dot"></div></div>`);
+  el.innerHTML = `<div class="pad">${parts.join("")}</div><div class="raw"></div>`;
+
+  const btns = [...el.querySelectorAll("[data-b]")];
+  const lt = el.querySelector('[data-t="lt"] i'), rt = el.querySelector('[data-t="rt"] i');
+  const sl = el.querySelector('[data-s="l"]'), sr = el.querySelector('[data-s="r"]');
+  const raw = el.querySelector(".raw");
+  const f = (v) => (v >= 0 ? " " : "") + v.toFixed(2);
+  const stick = (node, x, y, click) => {
+    node.querySelector(".dot").style.transform = `translate(${x * 24}px, ${-y * 24}px)`;
+    node.classList.toggle("moved", Math.hypot(x, y) > 0.05);
+    node.classList.toggle("click", click);
+  };
+  return (s) => {
+    for (const n of btns) n.classList.toggle("on", (s.b & BITS[n.dataset.b]) !== 0);
+    lt.style.width = (s.lt * 100) + "%";
+    rt.style.width = (s.rt * 100) + "%";
+    stick(sl, s.lx, s.ly, (s.b & BITS.LS) !== 0);
+    stick(sr, s.rx, s.ry, (s.b & BITS.RS) !== 0);
+    const names = Object.keys(BITS).filter((k) => s.b & BITS[k]).join("+") || "-";
+    raw.innerHTML = `buttons <b>${names}</b>  LT <b>${s.lt.toFixed(2)}</b>  RT <b>${s.rt.toFixed(2)}</b><br>` +
+      `L <b>(${f(s.lx)},${f(s.ly)})</b>  R <b>(${f(s.rx)},${f(s.ry)})</b>`;
+  };
+}
+
+// ---- phones (from the server) --------------------------------------------
+
+const phoneCards = [];
+const phonesEl = document.getElementById("phones");
+for (let i = 1; i <= 4; i++) {
+  const card = document.createElement("div");
+  card.className = "card off";
+  card.innerHTML = `<div class="head"><span class="tag" style="color:${COLORS[i - 1]}">P${i}</span>` +
+    `<span class="name unset" title="Click to rename">add name</span><span class="sub">open slot</span><span class="pill lat"></span><span class="pill rate"></span></div><div class="body"></div>`;
+  phonesEl.appendChild(card);
+  const c = { card, update: controller(card.querySelector(".body")), count: 0, name: "" };
+  card.querySelector(".name").addEventListener("click", () => {
+    const name = prompt(`Name for P${i}`, c.name);
+    if (name !== null && monitor && monitor.readyState === WebSocket.OPEN) {
+      monitor.send(JSON.stringify({ t: "rename", slot: i, name: name.trim() }));
+    }
+  });
+  phoneCards.push(c);
+}
+let monitor = null;
+const nameByXinput = new Map(); // Windows controller index -> player label, for the "Seen by Windows" cards
+
+const fromServer = (s) => ({ b: s[0], lt: s[1] / 255, rt: s[2] / 255,
+  lx: s[3] / 32767, ly: s[4] / 32767, rx: s[5] / 32767, ry: s[6] / 32767 });
+
+function showPlayers(players) {
+  nameByXinput.clear();
+  for (const p of players) {
+    const c = phoneCards[p.slot - 1];
+    c.name = p.name || "";
+    const nameEl = c.card.querySelector(".name");
+    nameEl.textContent = c.name || "add name";
+    nameEl.classList.toggle("unset", !c.name);
+    if (p.connected && p.xinput != null) nameByXinput.set(p.xinput, `P${p.slot}` + (c.name ? ` ${c.name}` : ""));
+    c.card.classList.toggle("off", !p.connected);
+    const sub = c.card.querySelector(".sub");
+    if (p.connected || p.held) {
+      const win = p.xinput != null ? ` · Windows #${p.xinput + 1}` : "";
+      sub.textContent = (p.held ? "reconnecting · " : "") + `${p.device} · ${p.ip}${win}`;
+      c.card.querySelector(".lat").textContent = p.latency != null ? p.latency + " ms" : "";
+    } else {
+      sub.textContent = "open slot";
+      c.card.querySelector(".lat").textContent = "";
+    }
+    c.update(fromServer(p.state || [0, 0, 0, 0, 0, 0, 0]));
+  }
+}
+
+const logEl = document.getElementById("log");
+function addLog(line) {
+  const atBottom = logEl.scrollTop + logEl.clientHeight >= logEl.scrollHeight - 4;
+  const d = document.createElement("div");
+  d.textContent = line;
+  logEl.appendChild(d);
+  while (logEl.childElementCount > 300) logEl.firstChild.remove();
+  if (atBottom) logEl.scrollTop = logEl.scrollHeight;
+}
+
+function connect() {
+  const ws = new WebSocket(`ws://${location.host}/ws/monitor`);
+  monitor = ws;
+  ws.onmessage = (ev) => {
+    const m = JSON.parse(ev.data);
+    if (m.t === "hello") {
+      document.getElementById("stop").hidden = !["localhost", "127.0.0.1"].includes(location.hostname);
+      const mode = document.getElementById("mode");
+      mode.textContent = m.mode;
+      mode.className = "mode " + (m.mode.startsWith("TEST") ? "test" : "live");
+      document.getElementById("url").textContent = "Phones: " + m.url;
+      showPlayers(m.players);
+    } else if (m.t === "players") {
+      showPlayers(m.players);
+    } else if (m.t === "state") {
+      const c = phoneCards[m.slot - 1];
+      c.update(fromServer(m.s));
+      c.count++;
+    } else if (m.t === "log") {
+      addLog(m.msg);
+    }
+  };
+  ws.onclose = () => {
+    document.getElementById("stop").hidden = true;
+    document.getElementById("mode").textContent = "server not running: use the desktop shortcut to start it";
+    document.getElementById("mode").className = "mode test";
+    setTimeout(connect, 1500);
+  };
+}
+connect();
+
+document.getElementById("stop").addEventListener("click", async () => {
+  if (!confirm("Stop the server? Every phone disconnects and the virtual controllers are unplugged.")) return;
+  try { await fetch("/api/stop", { method: "POST" }); } catch (_) {}
+});
+
+setInterval(() => {
+  for (const c of phoneCards) {
+    c.card.querySelector(".rate").textContent = c.count ? c.count + " updates/s" : "";
+    c.count = 0;
+  }
+}, 1000);
+
+// ---- Windows (Gamepad API) -----------------------------------------------
+
+// Standard Gamepad mapping, as browsers expose Xbox controllers.
+const STD = ["A", "B", "X", "Y", "LB", "RB", null, null, "Back", "Start", "LS", "RS", "Up", "Down", "Left", "Right", "Guide"];
+const winCards = new Map();
+const winEl = document.getElementById("windows");
+
+function fromGamepad(gp) {
+  let b = 0;
+  gp.buttons.forEach((btn, i) => { if (STD[i] && btn.pressed) b |= BITS[STD[i]]; });
+  const ax = (i) => gp.axes[i] || 0;
+  return { b, lt: gp.buttons[6] ? gp.buttons[6].value : 0, rt: gp.buttons[7] ? gp.buttons[7].value : 0,
+           lx: ax(0), ly: -ax(1), rx: ax(2), ry: -ax(3) };
+}
+
+function pollGamepads() {
+  const pads = navigator.getGamepads ? [...navigator.getGamepads()].filter(Boolean) : [];
+  const seen = new Set();
+  for (const gp of pads) {
+    seen.add(gp.index);
+    let c = winCards.get(gp.index);
+    if (!c) {
+      const card = document.createElement("div");
+      card.className = "card";
+      card.innerHTML = `<div class="head"><span class="tag">#${gp.index + 1}</span><span class="pill who"></span>` +
+        `<span class="sub"></span></div><div class="body"></div>`;
+      card.querySelector(".sub").textContent = gp.id;
+      winEl.appendChild(card);
+      c = { card, update: controller(card.querySelector(".body")) };
+      winCards.set(gp.index, c);
+    }
+    c.update(fromGamepad(gp));
+    const who = nameByXinput.get(gp.index) || "";
+    if (c.who !== who) { c.who = who; c.card.querySelector(".who").textContent = who; }
+  }
+  for (const [i, c] of winCards) {
+    if (!seen.has(i)) { c.card.remove(); winCards.delete(i); }
+  }
+  document.getElementById("winempty").hidden = winCards.size > 0;
+  requestAnimationFrame(pollGamepads);
+}
+requestAnimationFrame(pollGamepads);
+</script>
+</body>
+</html>
