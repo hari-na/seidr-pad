@@ -1,0 +1,63 @@
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "seidr-pad"
+dynamic = ["version"]
+description = "Use phones as Xbox 360 controllers for PC games, over Wi-Fi. No app to install."
+readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
+requires-python = ">=3.10"
+authors = [{ name = "harnar" }]
+keywords = ["gamepad", "controller", "xbox", "vigem", "local-multiplayer", "phone"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Environment :: Web Environment",
+    "Intended Audience :: End Users/Desktop",
+    "Operating System :: Microsoft :: Windows",
+    "Programming Language :: Python :: 3",
+    "Topic :: Games/Entertainment",
+]
+dependencies = [
+    "aiohttp>=3.9",
+    "qrcode>=7.4",
+    # Virtual controllers need Windows and the ViGEmBus driver. Elsewhere the
+    # server still runs in test mode.
+    "vgamepad>=0.1.0; sys_platform == 'win32'",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8", "pytest-aiohttp>=1.0", "ruff>=0.6"]
+
+[project.scripts]
+seidr-pad = "seidr_pad.cli:main"
+
+[project.gui-scripts]
+seidr-pad-launcher = "seidr_pad.launcher:main"
+
+[project.urls]
+Homepage = "https://github.com/hari-na/seidr-pad"
+Issues = "https://github.com/hari-na/seidr-pad/issues"
+
+[tool.setuptools]
+packages = ["seidr_pad"]
+
+[tool.setuptools.package-data]
+seidr_pad = ["static/*"]
+
+[tool.setuptools.dynamic]
+version = { attr = "seidr_pad.__version__" }
+
+[tool.ruff]
+line-length = 120
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
