@@ -4,6 +4,10 @@ All notable changes are listed here. The format follows [Keep a Changelog](https
 
 ## [Unreleased]
 
+### Removed
+
+- Phone vibration: buttons no longer buzz and game rumble no longer vibrates the phone, on any device.
+
 ## [0.1.0] - 2026-10-02
 
 First public version.

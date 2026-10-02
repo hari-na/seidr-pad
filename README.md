@@ -12,7 +12,6 @@ Four friends, one couch, zero controllers. Their phones will do.
 - **Reconnects cleanly:** a phone that drops off Wi-Fi gets its player slot back, and its buttons are released so nobody's character keeps running.
 - **Controller names:** each player can name their controller, and the name follows them between game nights.
 - **Live test page:** on the PC, see what each phone sends next to what Windows actually reports.
-- **Rumble:** game vibration is passed to Android phones.
 
 ## Requirements
 
@@ -48,8 +47,8 @@ Connect the phones before launching the game: some games only look for controlle
 
 ### Phone tips
 
-- **iPhone:** Safari can't hide its toolbars. For full screen, tap Share, then **Add to Home Screen**, and open Seidr Pad from there. iPhones can't vibrate from web pages.
-- **Android:** full screen and landscape lock turn on when you tap Start. Buttons buzz, and game rumble vibrates the phone.
+- **iPhone:** Safari can't hide its toolbars. For full screen, tap Share, then **Add to Home Screen**, and open Seidr Pad from there.
+- **Android:** full screen and landscape lock turn on when you tap Start.
 - Set the phone's auto-lock to a few minutes so it doesn't sleep during cutscenes.
 
 ## Test page
@@ -70,7 +69,7 @@ seidr-pad [--port 8777] [--fake] [-v]
 |---|---|
 | `--port` | Port to serve on (default 8777) |
 | `--fake` | Don't create controllers; for testing phones without the driver |
-| `-v` | Also log every button press and rumble |
+| `-v` | Also log every button press and the game's rumble requests |
 
 ## Troubleshooting
 

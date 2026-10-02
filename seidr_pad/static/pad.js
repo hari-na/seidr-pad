@@ -173,10 +173,6 @@ let lastTriggers = [0, 0];
 function changed() {
   state = computeState();
   render();
-  const pressed = state[0] & ~prevButtons;
-  if ((pressed || (state[1] && !lastTriggers[0]) || (state[2] && !lastTriggers[1])) && navigator.vibrate) {
-    navigator.vibrate(8);
-  }
   const buttonsChanged = state[0] !== prevButtons || state[1] !== lastTriggers[0] || state[2] !== lastTriggers[1];
   prevButtons = state[0];
   lastTriggers = [state[1], state[2]];
@@ -288,12 +284,10 @@ function connect() {
       latency = Math.round(performance.now() - m.pong);
       $("#net").textContent = latency + " ms";
     }
-    if (m.r && navigator.vibrate) navigator.vibrate(Math.max(m.r[0], m.r[1]) > 20 ? 10000 : 0);
   };
   ws.onclose = () => {
     ws = null;
     $("#net").textContent = "reconnecting";
-    if (navigator.vibrate) navigator.vibrate(0);
     if (started && !paused) showOverlay("Reconnecting", "Check that this phone is on the same Wi-Fi as the PC.");
     setTimeout(() => { if (!paused) connect(); }, 1500);
   };
